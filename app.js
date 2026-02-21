@@ -180,7 +180,6 @@ function speak(text) {
 
     stopSpeech(); // avoid overlap
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "vi-VN";
     const v = getSelectedVoice();
     if (v) u.voice = v;
 
