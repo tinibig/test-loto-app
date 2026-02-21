@@ -9,7 +9,6 @@
 <body>
   <header class="wrap">
     <h1>Lô tô</h1>
-    <p class="muted">Static web app + Google Sheet chants + Browser Vietnamese TTS (free deploy).</p>
   </header>
 
   <main class="wrap grid2">
@@ -50,18 +49,6 @@
         Voice:
         <select id="voiceSelect"></select>
       </label>
-
-      <hr />
-
-      <h3>Chant database (Google Sheet CSV)</h3>
-      <label class="field">
-        CSV URL:
-        <input id="sheetUrl" type="url" placeholder="Paste published CSV URL here" />
-      </label>
-      <div class="row">
-        <button id="btnLoadSheet">Load sheet</button>
-        <span id="dbStatus" class="muted">No sheet loaded (fallback templates will be used).</span>
-      </div>
     </section>
 
     <section class="card">
@@ -80,20 +67,19 @@
 
       <hr />
 
-      <h3>History (called in this session)</h3>
-      <div id="history" class="history"></div>
-    </section>
+      <div class="historyGrid">
+        <div>
+          <h3>History</h3>
+          <div id="history" class="history"></div>
+        </div>
 
-    <section class="card full">
-      <h2>0–99 Grid</h2>
-      <div id="grid" class="grid"></div>
-      <p class="muted small">Called numbers are highlighted. Current number is pulsing.</p>
+        <div>
+          <h3>Grid</h3>
+          <div id="grid" class="grid"></div>
+        </div>
+      </div>
     </section>
   </main>
-
-  <footer class="wrap muted small">
-    Tip: If Vietnamese voice isn’t available on your browser/device, install a Vietnamese TTS voice (system setting) or try another browser.
-  </footer>
 
   <script src="app.js"></script>
 </body>

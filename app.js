@@ -15,14 +15,12 @@ const speechRateEl = $("speechRate");
 const speechRateVal = $("speechRateVal");
 const voiceSelect = $("voiceSelect");
 
-const sheetUrlEl = $("sheetUrl");
-const btnLoadSheet = $("btnLoadSheet");
-const dbStatus = $("dbStatus");
-
 const currentNumberEl = $("currentNumber");
 const currentChantEl = $("currentChant");
 const historyEl = $("history");
 const gridEl = $("grid");
+
+const CHANT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6oPMYgJg7PnoNsW8WHMw1w_6GntnP-eiNnOrjR6rQOe1YuNps0sAu6XCUhaRUNTp4UMzNvWMgqiYE/pub?gid=0&single=true&output=csv";
 
 // Session state
 let remaining = [];
@@ -270,7 +268,7 @@ function stopAuto() {
 }
 
 function toggleAuto() {
-  if (!called && !remaining) return;
+  if (!remaining.length) return;
   autoOn = !autoOn;
   btnAuto.textContent = autoOn ? "Auto: ON" : "Auto: OFF";
   if (autoOn) {
@@ -331,7 +329,7 @@ function parseCSV(text) {
 }
 
 async function loadSheet(url) {
-  dbStatus.textContent = "Loading sheet...";
+  console.log("Loading sheet...");
   chantDB = new Map();
 
   const res = await fetch(url, { cache: "no-store" });
@@ -361,7 +359,7 @@ async function loadSheet(url) {
     }
   }
 
-  dbStatus.textContent = `Loaded: ${countNums}/100 numbers, ${countOpts} total options.`;
+  console.log(`Loaded: ${countNums}/100 numbers, ${countOpts} total options.`);
 }
 
 // --- Event wiring ---
@@ -379,19 +377,14 @@ btnPause.addEventListener("click", pauseAll);
 btnResume.addEventListener("click", resumeAll);
 btnStopVoice.addEventListener("click", stopSpeech);
 
-btnLoadSheet.addEventListener("click", async () => {
-  const url = sheetUrlEl.value.trim();
-  if (!url) {
-    dbStatus.textContent = "Paste a published Google Sheet CSV URL first.";
-    return;
-  }
+(async () => {
   try {
-    await loadSheet(url);
+    await loadSheet(CHANT_CSV_URL);
   } catch (e) {
-    dbStatus.textContent = `Load failed. Using fallback templates. (${e.message})`;
-    chantDB = new Map();
+    console.warn("Sheet load failed, using fallback templates.", e);
+    chantDB = new Map(); // fallback will be used by pickChant()
   }
-});
+})();
 
 // Web Speech voices often load async
 if (window.speechSynthesis) {

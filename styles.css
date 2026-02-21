@@ -58,3 +58,15 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   50% { transform: scale(1.03); }
   100% { transform: scale(1); }
 }
+
+.historyGrid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 900px) {
+  .historyGrid {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
