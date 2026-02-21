@@ -11,8 +11,6 @@ const btnResume = $("btnResume");
 const btnStopVoice = $("btnStopVoice");
 
 const intervalSecEl = $("intervalSec");
-const speechRateEl = $("speechRate");
-const speechRateVal = $("speechRateVal");
 const voiceSelect = $("voiceSelect");
 
 const currentNumberEl = $("currentNumber");
@@ -123,7 +121,8 @@ function updateGrid(currentN = null) {
 
 function renderHistory() {
   historyEl.innerHTML = "";
-  for (const n of called) {
+  for (let i = called.length - 1; i >= 0; i--) {
+    const n = called[i];
     const pill = document.createElement("span");
     pill.className = "pill";
     pill.textContent = pad2(n);
@@ -180,8 +179,6 @@ function speak(text) {
     const u = new SpeechSynthesisUtterance(text);
     const v = getSelectedVoice();
     if (v) u.voice = v;
-
-    u.rate = Number(speechRateEl.value) || 1.0;
 
     speaking = true;
     u.onend = () => { speaking = false; resolve(); };
@@ -365,10 +362,6 @@ async function loadSheet(url) {
 // --- Event wiring ---
 buildGrid();
 
-speechRateEl.addEventListener("input", () => {
-  speechRateVal.textContent = Number(speechRateEl.value).toFixed(2);
-});
-
 btnStart.addEventListener("click", startSession);
 btnEnd.addEventListener("click", endSession);
 btnNext.addEventListener("click", callNext);
@@ -393,4 +386,3 @@ if (window.speechSynthesis) {
 }
 
 setControls(false);
-speechRateVal.textContent = Number(speechRateEl.value).toFixed(2);

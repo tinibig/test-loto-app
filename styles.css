@@ -70,3 +70,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
     align-items: start;
   }
 }
+
+.rightTall {
+  grid-row: span 2;
+}
