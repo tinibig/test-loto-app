@@ -32,7 +32,14 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .big { font-size: 52px; font-weight: 800; letter-spacing: 1px; }
 .chant { line-height: 1.5; white-space: pre-wrap; }
 
-.history { display: flex; flex-wrap: wrap; gap: 8px; }
+.history {
+  display: flex;
+  flex-wrap: nowrap;     /* one line only */
+  gap: 8px;
+  overflow-x: auto;      /* just in case small screens */
+  padding-bottom: 4px;
+}
+
 .pill {
   padding: 6px 10px; border-radius: 999px; border: 1px solid #253046; background: #0f1420;
   font-size: 13px;

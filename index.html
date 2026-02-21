@@ -12,7 +12,34 @@
   </header>
 
   <main class="wrap grid2">
-    <!-- LEFT / TOP: Session -->
+    <!-- LEFT / TOP: Now calling -->
+    <section class="card">
+      <h2>Now calling</h2>
+
+      <div class="now">
+        <div>
+          <div class="label">Current number</div>
+          <div id="currentNumber" class="big">—</div>
+        </div>
+        <div>
+          <div class="label">Chant</div>
+          <div id="currentChant" class="chant muted">Start a session to begin.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Full history (spans both rows) -->
+    <section class="card rightTall">
+      <h2>History</h2>
+      <div id="history" class="history"></div>
+
+      <hr />
+
+      <h3>Grid</h3>
+      <div id="grid" class="grid"></div>
+    </section>
+
+    <!-- LEFT / BOTTOM: Session -->
     <section class="card">
       <h2>Session</h2>
 
@@ -44,33 +71,6 @@
         Voice:
         <select id="voiceSelect"></select>
       </label>
-    </section>
-
-    <!-- RIGHT: Full history (spans both rows) -->
-    <section class="card rightTall">
-      <h2>History</h2>
-      <div id="history" class="history"></div>
-
-      <hr />
-
-      <h3>Grid</h3>
-      <div id="grid" class="grid"></div>
-    </section>
-
-    <!-- LEFT / BOTTOM: Now calling -->
-    <section class="card">
-      <h2>Now calling</h2>
-
-      <div class="now">
-        <div>
-          <div class="label">Current number</div>
-          <div id="currentNumber" class="big">—</div>
-        </div>
-        <div>
-          <div class="label">Chant</div>
-          <div id="currentChant" class="chant muted">Start a session to begin.</div>
-        </div>
-      </div>
     </section>
   </main>
 

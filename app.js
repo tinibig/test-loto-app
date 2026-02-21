@@ -1,6 +1,7 @@
-// Lô tô host (người cầm cái) — 0..99, no repeats, web TTS, Google Sheet CSV chants.
+// Lô tô host
 
 const $ = (id) => document.getElementById(id);
+const HISTORY_MAX = 10; // show only latest 15 calls
 
 const btnStart = $("btnStart");
 const btnEnd = $("btnEnd");
@@ -121,7 +122,9 @@ function updateGrid(currentN = null) {
 
 function renderHistory() {
   historyEl.innerHTML = "";
-  for (let i = called.length - 1; i >= 0; i--) {
+
+  const start = Math.max(0, called.length - HISTORY_MAX);
+  for (let i = called.length - 1; i >= start; i--) {
     const n = called[i];
     const pill = document.createElement("span");
     pill.className = "pill";
