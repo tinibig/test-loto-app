@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lô tô — Người cầm cái (0–99)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="wrap">
+    <h1>Lô tô — Người cầm cái (0–99)</h1>
+    <p class="muted">Static web app + Google Sheet chants + Browser Vietnamese TTS (free deploy).</p>
+  </header>
+
+  <main class="wrap grid2">
+    <section class="card">
+      <h2>Session</h2>
+
+      <div class="row">
+        <button id="btnStart" class="primary">Start new session</button>
+        <button id="btnEnd" class="danger" disabled>End session</button>
+      </div>
+
+      <div class="row">
+        <button id="btnNext" disabled>Call next number</button>
+        <button id="btnAuto" disabled>Auto: OFF</button>
+      </div>
+
+      <div class="row">
+        <button id="btnPause" disabled>Pause</button>
+        <button id="btnResume" disabled>Resume</button>
+        <button id="btnStopVoice" disabled>Stop voice</button>
+      </div>
+
+      <hr />
+
+      <h3>Timing</h3>
+      <label class="field">
+        Seconds between calls (auto):
+        <input id="intervalSec" type="number" min="1" max="60" step="1" value="5" />
+      </label>
+
+      <label class="field">
+        Speech rate:
+        <input id="speechRate" type="range" min="0.7" max="1.3" step="0.05" value="1.0" />
+        <span id="speechRateVal" class="badge">1.00</span>
+      </label>
+
+      <label class="field">
+        Voice:
+        <select id="voiceSelect"></select>
+      </label>
+
+      <hr />
+
+      <h3>Chant database (Google Sheet CSV)</h3>
+      <label class="field">
+        CSV URL:
+        <input id="sheetUrl" type="url" placeholder="Paste published CSV URL here" />
+      </label>
+      <div class="row">
+        <button id="btnLoadSheet">Load sheet</button>
+        <span id="dbStatus" class="muted">No sheet loaded (fallback templates will be used).</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Now calling</h2>
+
+      <div class="now">
+        <div>
+          <div class="label">Current number</div>
+          <div id="currentNumber" class="big">—</div>
+        </div>
+        <div>
+          <div class="label">Chant</div>
+          <div id="currentChant" class="chant muted">Start a session to begin.</div>
+        </div>
+      </div>
+
+      <hr />
+
+      <h3>History (called in this session)</h3>
+      <div id="history" class="history"></div>
+    </section>
+
+    <section class="card full">
+      <h2>0–99 Grid</h2>
+      <div id="grid" class="grid"></div>
+      <p class="muted small">Called numbers are highlighted. Current number is pulsing.</p>
+    </section>
+  </main>
+
+  <footer class="wrap muted small">
+    Tip: If Vietnamese voice isn’t available on your browser/device, install a Vietnamese TTS voice (system setting) or try another browser.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
