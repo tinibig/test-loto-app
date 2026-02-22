@@ -1,7 +1,7 @@
 // Lô tô host
 
 const $ = (id) => document.getElementById(id);
-const HISTORY_MAX = 10; // show only latest 15 calls
+const HISTORY_MAX = 10; // show only latest N calls in the list
 
 const btnStart = $("btnStart");
 const btnEnd = $("btnEnd");
@@ -19,7 +19,8 @@ const currentChantEl = $("currentChant");
 const historyEl = $("history");
 const gridEl = $("grid");
 
-const CHANT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6oPMYgJg7PnoNsW8WHMw1w_6GntnP-eiNnOrjR6rQOe1YuNps0sAu6XCUhaRUNTp4UMzNvWMgqiYE/pub?gid=0&single=true&output=csv";
+const CHANT_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6oPMYgJg7PnoNsW8WHMw1w_6GntnP-eiNnOrjR6rQOe1YuNps0sAu6XCUhaRUNTp4UMzNvWMgqiYE/pub?gid=0&single=true&output=csv";
 
 // Session state
 let remaining = [];
@@ -28,7 +29,7 @@ let autoOn = false;
 let autoTimer = null;
 let speaking = false;
 
-// Chant DB: Map<number, string[]>
+// Chant DB: Map<number, string[]> where array is [opt1..opt5] (may contain empty strings)
 let chantDB = new Map();
 
 // --- Utilities ---
@@ -44,59 +45,25 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-// Vietnamese number reading for 0..99 (simple, standard)
-function numToVietnamese(n) {
-  const ones = ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín"];
-  if (n < 0 || n > 99 || !Number.isInteger(n)) return String(n);
-  if (n < 10) return ones[n];
-
-  const tens = Math.floor(n / 10);
-  const unit = n % 10;
-
-  if (n === 10) return "mười";
-  if (tens === 1) {
-    // 11-19
-    if (unit === 5) return "mười lăm";
-    return `mười ${ones[unit]}`;
-  }
-
-  // 20-99
-  let res = `${ones[tens]} mươi`;
-  if (unit === 0) return res;
-  if (unit === 1) return `${res} mốt`;
-  if (unit === 4) return `${res} bốn`;
-  if (unit === 5) return `${res} lăm`;
-  return `${res} ${ones[unit]}`;
-}
-
-// Replace placeholders. Ensure number appears at the end if user forgot placeholders.
-function renderChant(template, n) {
-  const hasPlaceholder = template.includes("{n}") || template.includes("{n2}") || template.includes("{vn}");
-  let t = template;
-  t = t.replaceAll("{n}", String(n))
-       .replaceAll("{n2}", pad2(n))
-       .replaceAll("{vn}", numToVietnamese(n));
-  if (!hasPlaceholder) {
-    t = `${t} — ra con ${numToVietnamese(n)}`;
-  }
-  return t;
-}
-
-// Fallback templates if sheet not loaded
-function fallbackOptions() {
-  // 2 options per number (generic templates) for MVP.
-  return [
-    "Miền Tây vui hội xuân sang, lô tô mở sạp — ra con {vn}",
-    "Beat lên cho nó mặn mà, mình hô cái số… {n2}"
-  ];
-}
-
-// Pick an option for a number
+// Pick an option for a number (strict: only from sheet).
+// Randomize among opt1..opt5; if picked empty, retry until found.
 function pickChant(n) {
   const opts = chantDB.get(n);
-  const options = (opts && opts.length) ? opts : fallbackOptions();
-  const tpl = options[Math.floor(Math.random() * options.length)];
-  return renderChant(tpl, n);
+  if (!opts || !opts.length) return "";
+
+  // Try random picks a few times
+  for (let tries = 0; tries < 20; tries++) {
+    const idx = Math.floor(Math.random() * 5); // 0..4
+    const s = (opts[idx] ?? "").trim();
+    if (s) return s;
+  }
+
+  // Fallback: return first non-empty if random kept hitting empties
+  for (const s of opts) {
+    const t = (s ?? "").trim();
+    if (t) return t;
+  }
+  return "";
 }
 
 // --- Grid / UI ---
@@ -154,14 +121,14 @@ function populateVoices() {
   }
 
   // Prefer Vietnamese voice if available
-  const vi = voices.find(v => (v.lang || "").toLowerCase().startsWith("vi"));
+  const vi = voices.find((v) => (v.lang || "").toLowerCase().startsWith("vi"));
   if (vi) voiceSelect.value = vi.voiceURI;
 }
 
 function getSelectedVoice() {
   const voices = window.speechSynthesis?.getVoices?.() || [];
   const uri = voiceSelect.value;
-  return voices.find(v => v.voiceURI === uri) || null;
+  return voices.find((v) => v.voiceURI === uri) || null;
 }
 
 function stopSpeech() {
@@ -173,19 +140,30 @@ function stopSpeech() {
 function speak(text) {
   return new Promise((resolve) => {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
-      // No TTS support
       resolve();
       return;
     }
 
     stopSpeech(); // avoid overlap
     const u = new SpeechSynthesisUtterance(text);
+
     const v = getSelectedVoice();
-    if (v) u.voice = v;
+    if (v) {
+      u.voice = v;
+      u.lang = v.lang || "vi-VN";
+    } else {
+      u.lang = "vi-VN";
+    }
 
     speaking = true;
-    u.onend = () => { speaking = false; resolve(); };
-    u.onerror = () => { speaking = false; resolve(); };
+    u.onend = () => {
+      speaking = false;
+      resolve();
+    };
+    u.onerror = () => {
+      speaking = false;
+      resolve();
+    };
 
     window.speechSynthesis.speak(u);
   });
@@ -225,7 +203,7 @@ function endSession() {
 }
 
 async function callNext() {
-  if (speaking) return;              // prevent double calls while speaking
+  if (speaking) return;
   if (!remaining.length) {
     currentChantEl.textContent = "Hết số rồi! End session.";
     stopAuto();
@@ -238,13 +216,19 @@ async function callNext() {
   const chant = pickChant(n);
 
   currentNumberEl.textContent = pad2(n);
-  currentChantEl.textContent = chant;
   renderHistory();
   updateGrid(n);
 
+  if (!chant) {
+    // Safety (shouldn't happen if sheet has at least one option per number)
+    currentChantEl.textContent = `Missing chant for ${pad2(n)} in Sheet. Auto stopped.`;
+    stopAuto();
+    return;
+  }
+
+  currentChantEl.textContent = chant;
   await speak(chant);
 
-  // After speaking, in auto mode schedule next after interval
   if (autoOn) scheduleNextAuto();
 }
 
@@ -272,7 +256,6 @@ function toggleAuto() {
   autoOn = !autoOn;
   btnAuto.textContent = autoOn ? "Auto: ON" : "Auto: OFF";
   if (autoOn) {
-    // If not currently speaking, kick off immediately
     if (!speaking) callNext();
   } else {
     stopAutoTimerOnly();
@@ -287,7 +270,6 @@ function pauseAll() {
 
 function resumeAll() {
   if (window.speechSynthesis) window.speechSynthesis.resume();
-  // If auto is on and we're not speaking, schedule next
   if (autoOn && !speaking) scheduleNextAuto();
 }
 
@@ -299,10 +281,12 @@ function parseCSVLine(line) {
   let inQ = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
-    if (ch === '"' ) {
-      if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
-      else inQ = !inQ;
-    } else if (ch === ',' && !inQ) {
+    if (ch === '"') {
+      if (inQ && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else inQ = !inQ;
+    } else if (ch === "," && !inQ) {
       out.push(cur);
       cur = "";
     } else {
@@ -310,14 +294,14 @@ function parseCSVLine(line) {
     }
   }
   out.push(cur);
-  return out.map(s => s.trim());
+  return out.map((s) => s.trim());
 }
 
 function parseCSV(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (!lines.length) return [];
 
-  const header = parseCSVLine(lines[0]).map(h => h.toLowerCase());
+  const header = parseCSVLine(lines[0]).map((h) => h.toLowerCase());
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const cols = parseCSVLine(lines[i]);
@@ -337,29 +321,32 @@ async function loadSheet(url) {
   const text = await res.text();
 
   const rows = parseCSV(text);
-  // Expect num,opt1,opt2,... but allow any opt* columns.
+
   let countNums = 0;
-  let countOpts = 0;
+  let countNonEmpty = 0;
 
   for (const r of rows) {
     const n = Number((r.num ?? "").trim());
     if (!Number.isInteger(n) || n < 0 || n > 99) continue;
 
-    const opts = [];
-    for (const k of Object.keys(r)) {
-      if (k.startsWith("opt")) {
-        const v = (r[k] ?? "").trim();
-        if (v) opts.push(v);
-      }
-    }
-    if (opts.length) {
+    // Force opt1..opt5 (some may be empty)
+    const opts = [
+      (r.opt1 ?? "").trim(),
+      (r.opt2 ?? "").trim(),
+      (r.opt3 ?? "").trim(),
+      (r.opt4 ?? "").trim(),
+      (r.opt5 ?? "").trim(),
+    ];
+
+    // Keep row only if at least one option exists
+    if (opts.some((s) => s.length > 0)) {
       chantDB.set(n, opts);
       countNums++;
-      countOpts += opts.length;
+      countNonEmpty += opts.filter((s) => s.length > 0).length;
     }
   }
 
-  console.log(`Loaded: ${countNums}/100 numbers, ${countOpts} total options.`);
+  console.log(`Loaded: ${countNums}/100 numbers, ${countNonEmpty} non-empty options total.`);
 }
 
 // --- Event wiring ---
@@ -377,8 +364,8 @@ btnStopVoice.addEventListener("click", stopSpeech);
   try {
     await loadSheet(CHANT_CSV_URL);
   } catch (e) {
-    console.warn("Sheet load failed, using fallback templates.", e);
-    chantDB = new Map(); // fallback will be used by pickChant()
+    console.warn("Sheet load failed. Chant DB is empty.", e);
+    chantDB = new Map();
   }
 })();
 
